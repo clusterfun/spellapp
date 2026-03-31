@@ -35,7 +35,7 @@ images:
 
 substitutions:
   _LOCATION: us-east1
-  _REPOSITORY: cloud-run-source-deploy
+  _REPOSITORY: spelling-app
   _SERVICE_NAME: spelling-app
   _TAG: latest
   _API_KEY: "" # Set this in the gcloud command
