@@ -8,6 +8,13 @@ COPY package-lock.json ./
 RUN npm install
 
 COPY . .
+
+# Receive build arguments and set them as environment variables for Vite
+ARG VITE_API_KEY
+ARG VITE_PROJECT_ID
+ENV VITE_API_KEY=$VITE_API_KEY
+ENV VITE_PROJECT_ID=$VITE_PROJECT_ID
+
 RUN npm run build
 
 # Stage 2: Serve the app with a web server
