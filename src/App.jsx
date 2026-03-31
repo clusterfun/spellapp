@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Upload, Mic, Play, CheckCircle, XCircle, RefreshCw, Volume2, ArrowRight, Save, Clock, Home, FileText } from 'lucide-react';
+import errorHandler from './errorReporting';
 
 const apiKey = import.meta.env.VITE_API_KEY;
 
