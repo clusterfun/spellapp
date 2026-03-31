@@ -34,7 +34,7 @@ images:
   - '$_LOCATION-docker.pkg.dev/$PROJECT_ID/$_REPOSITORY/$_SERVICE_NAME:$_TAG'
 
 substitutions:
-  _LOCATION: us-central1
+  _LOCATION: us-east1
   _REPOSITORY: cloud-run-source-deploy
   _SERVICE_NAME: spelling-app
   _TAG: latest
