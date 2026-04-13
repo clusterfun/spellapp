@@ -7,15 +7,21 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = process.env.PORT || 8080;
+const PORT = parseInt(process.env.PORT) || 8080;
 const API_KEY = process.env.API_KEY;
 
 app.use(cors());
-app.use(express.json({ limit: '50mb' })); // Increased limit for image data
+app.use(express.json({ limit: '50mb' }));
+
+// Health check endpoint for Cloud Run
+app.get('/healthz', (req, res) => {
+  res.status(200).send('OK');
+});
 
 // Endpoint to list available Gemini models
 app.get('/api/models', async (req, res) => {
   if (!API_KEY) {
+    console.error('API_KEY is missing from environment variables');
     return res.status(500).json({ error: 'API_KEY not configured on server' });
   }
 
@@ -35,6 +41,7 @@ app.post('/api/extract/:model', async (req, res) => {
   const payload = req.body;
 
   if (!API_KEY) {
+    console.error('API_KEY is missing from environment variables');
     return res.status(500).json({ error: 'API_KEY not configured on server' });
   }
 
@@ -47,6 +54,7 @@ app.post('/api/extract/:model', async (req, res) => {
 
     if (!response.ok) {
       const errorText = await response.text();
+      console.error(`Gemini API Error (${response.status}): ${errorText}`);
       return res.status(response.status).json({ error: `Gemini API Error: ${errorText}` });
     }
 
@@ -66,6 +74,15 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+// Explicitly listen on 0.0.0.0 for Cloud Run
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server is listening on 0.0.0.0:${PORT}`);
+});
+
+// Handle graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM signal received: closing HTTP server');
+  server.close(() => {
+    console.log('HTTP server closed');
+  });
 });
