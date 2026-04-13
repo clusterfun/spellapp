@@ -5,10 +5,6 @@ steps:
       - 'build'
       - '-t'
       - '$_LOCATION-docker.pkg.dev/$PROJECT_ID/$_REPOSITORY/$_SERVICE_NAME:$_TAG'
-      - '--build-arg'
-      - 'VITE_API_KEY=$_API_KEY'
-      - '--build-arg'
-      - 'VITE_PROJECT_ID=$PROJECT_ID'
       - '.'
 
   # 2. Push the Docker image to Artifact Registry
@@ -16,6 +12,8 @@ steps:
     args: ['push', '$_LOCATION-docker.pkg.dev/$PROJECT_ID/$_REPOSITORY/$_SERVICE_NAME:$_TAG']
 
   # 3. Deploy to Cloud Run
+  # NOTE: You must set the API_KEY environment variable in the Cloud Run console
+  # or by adding --set-env-vars API_KEY=your_key_here to the gcloud command below.
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
     args:
@@ -38,4 +36,3 @@ substitutions:
   _REPOSITORY: spelling-app
   _SERVICE_NAME: spelling-app
   _TAG: latest
-  _API_KEY: "" # Set this in the gcloud command

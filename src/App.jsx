@@ -127,14 +127,14 @@ export default function App() {
       };
 
       const fetchWithRetry = async () => {
-        // Step 1: Ask Google's servers EXACTLY which models your specific API key has access to
+        // Step 1: Ask our backend EXACTLY which models your specific API key has access to
         let targetModel = 'gemini-1.5-flash';
         try {
-          const modelsRes = await fetch(`https://generativelanguage.googleapis.com/v1/models?key=${apiKey}`);
+          const modelsRes = await fetch(`/api/models`);
           if (modelsRes.ok) {
             const modelsData = await modelsRes.json();
             // Filter the available models down to ones that support vision/content generation
-            const availableModels = modelsData.models
+            const availableModels = (modelsData.models || [])
               .map(m => m.name.replace('models/', ''))
               .filter(name => name.includes('gemini'));
             
@@ -155,7 +155,7 @@ export default function App() {
         const delays = [1000, 2000, 4000, 8000, 16000];
         for (let i = 0; i < 5; i++) {
           try {
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1/models/${targetModel}:generateContent?key=${apiKey}`, {
+            const res = await fetch(`/api/extract/${targetModel}`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(payload)
@@ -163,15 +163,11 @@ export default function App() {
             
             if (!res.ok) {
               const errorText = await res.text();
-              if (res.status === 403 || res.status === 401) {
-                throw new Error(`Missing or Invalid API Key! If running locally, please check the apiKey variable on line 4.`);
-              }
               throw new Error(`HTTP ${res.status}: ${errorText}`);
             }
             
             return await res.json();
           } catch (err) {
-            if (err.message.includes('API Key')) throw err; // Don't retry authorization errors
             if (i === 4) throw err;
             await new Promise(r => setTimeout(r, delays[i]));
           }

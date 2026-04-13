@@ -9,23 +9,26 @@ RUN npm install
 
 COPY . .
 
-# Receive build arguments and set them as environment variables for Vite
-ARG VITE_API_KEY
-ARG VITE_PROJECT_ID
-ENV VITE_API_KEY=$VITE_API_KEY
-ENV VITE_PROJECT_ID=$VITE_PROJECT_ID
-
+# We no longer pass VITE_API_KEY to the frontend build
 RUN npm run build
 
-# Stage 2: Serve the app with a web server
-FROM nginx:stable-alpine
+# Stage 2: Serve with Node.js Express server
+FROM node:20-alpine
 
-COPY --from=build /app/dist /usr/share/nginx/html
+WORKDIR /app
 
-# Copy the nginx config template
-COPY nginx.template.conf /etc/nginx/templates/default.conf.template
+# Copy built assets from Stage 1
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/server.js ./
+COPY --from=build /app/package.json ./
+COPY --from=build /app/package-lock.json ./
 
+# Install ONLY production dependencies for the server
+RUN npm install --production
+
+# The API_KEY should be provided at RUNTIME as an environment variable
+# Cloud Run handles this via its configuration/secrets
+ENV PORT=8080
 EXPOSE 8080
 
-CMD ["/bin/sh", "-c", "envsubst < /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
-
+CMD ["node", "server.js"]
