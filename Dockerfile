@@ -23,12 +23,13 @@ COPY --from=build /app/server.js ./
 COPY --from=build /app/package.json ./
 COPY --from=build /app/package-lock.json ./
 
-# Install ONLY production dependencies for the server
-RUN npm install --production
+# Install production dependencies for the server
+RUN npm install --omit=dev
 
 # The API_KEY should be provided at RUNTIME as an environment variable
 # Cloud Run handles this via its configuration/secrets
 ENV PORT=8080
 EXPOSE 8080
 
-CMD ["node", "server.js"]
+# Use npm start to handle signals and start the server
+CMD ["npm", "start"]

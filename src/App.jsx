@@ -19,6 +19,7 @@ export default function App() {
   const [missedWords, setMissedWords] = useState([]);
   const [userInput, setUserInput] = useState('');
   const [feedback, setFeedback] = useState('');
+  const [incorrectGuesses, setIncorrectGuesses] = useState([]);
   const [isListening, setIsListening] = useState(false);
   const [error, setError] = useState('');
 
@@ -62,6 +63,7 @@ export default function App() {
     setTries(0);
     setUserInput('');
     setFeedback('');
+    setIncorrectGuesses([]);
   };
 
   const syncTestProgress = (updates) => {
@@ -303,12 +305,20 @@ export default function App() {
 
     if (cleanInput === cleanWord) {
       setFeedback('correct');
-      const updatedCorrect = [...correctWords, currentWord];
-      setCorrectWords(updatedCorrect);
-      setTimeout(() => advanceToNext(updatedCorrect, missedWords), 1500);
+      if (tries === 0) {
+        const updatedCorrect = [...correctWords, currentWord];
+        setCorrectWords(updatedCorrect);
+        setTimeout(() => advanceToNext(updatedCorrect, missedWords), 1500);
+      } else {
+        const updatedMissed = [...missedWords, currentWord];
+        setMissedWords(updatedMissed);
+        setTimeout(() => advanceToNext(correctWords, updatedMissed), 1500);
+      }
     } else {
       const newTries = tries + 1;
+      const attemptToRecord = userInput; 
       setTries(newTries);
+      setIncorrectGuesses(prev => [...prev, attemptToRecord]);
       
       if (newTries >= 5) {
         setFeedback('failed');
@@ -339,6 +349,7 @@ export default function App() {
       setTries(0);
       setUserInput('');
       setFeedback('');
+      setIncorrectGuesses([]);
       speakWord(words[nextIndex]);
       setTimeout(() => inputRef.current?.focus(), 100);
     } else {
@@ -545,20 +556,22 @@ export default function App() {
         </div>
 
         {/* Feedback Area */}
-        <div className="h-16 flex items-center justify-center w-full">
+        <div className="h-24 flex items-center justify-center w-full text-center">
           {feedback === 'correct' && (
             <div className="text-green-600 text-xl font-bold flex items-center animate-bounce">
               <CheckCircle className="mr-2" /> Correct! Great job!
             </div>
           )}
           {feedback === 'incorrect' && (
-            <div className="text-amber-600 text-xl font-bold flex items-center">
-              <XCircle className="mr-2" /> Not quite. Try again! ({5 - tries} tries left)
+            <div className="text-amber-600 text-xl font-bold flex flex-col items-center">
+              <div className="flex items-center"><XCircle className="mr-2" /> Not quite. Try again! ({5 - tries} tries left)</div>
+              <div className="text-sm font-bold text-gray-600 mt-1 italic">Incorrect guesses: <span className="font-mono uppercase text-red-600">{incorrectGuesses.join(', ')}</span></div>
             </div>
           )}
           {feedback === 'failed' && (
-            <div className="text-red-600 text-lg font-bold flex flex-col items-center text-center">
+            <div className="text-red-600 text-lg font-bold flex flex-col items-center">
               <div className="flex items-center"><XCircle className="mr-2" /> Out of tries!</div>
+              <div className="text-sm font-bold text-gray-600 mt-1 italic">Incorrect guesses: <span className="font-mono uppercase text-red-600">{incorrectGuesses.join(', ')}</span></div>
               <div className="mt-2 text-gray-700 font-normal">The correct spelling is: <span className="font-black text-2xl tracking-widest">{currentWord.word}</span></div>
             </div>
           )}
